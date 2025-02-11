@@ -11,6 +11,9 @@ import re
 # перед отправкой в нейросеть
 from razdel import sentenize
 
+
+import html2text
+import csv 
 # Без torch невозможна работа с нейросетями
 import torch
 
@@ -19,7 +22,7 @@ import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 # Библиотека matplotlib позволит построить графики кривых тональности
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 
 # Фильтр Савицкого-Голея понадобится нам для обработки результатов,
 # которая будет описана позже
@@ -33,36 +36,56 @@ def clean_text(text: str) -> str:
     cleaned_text = re.sub(r'\s+', ' ', text).strip()
 
     return cleaned_text
-    
-cleaned_text = clean_text("Дорогой дневник! У меня появилась сумка, которая учит меня шить :) Сегодня у нее отвалилось крепление для крепления.")
 
-# Разбиваем текст на предложения и загружаем их в список
-sentences = []
+
+def read_file(filename) -> list:
+    sentences = []
+    with open(filename, 'r', encoding='utf-8-sig', newline='\n') as file:
+        reader = csv.reader(file)
+        header = list(next(reader)) 
+        for items in reader:
+            text = items[2]
+            cleaned_text = clean_text(html2text.html2text(text))
+            sentences.append(cleaned_text)
+    return sentences
+
+sentences = read_file('dataset_comments35.csv')
 #for substring in list(sentenize(cleaned_text)):
 #    sentences.append(substring.text)
-sentences.append(cleaned_text)
+# Разбиваем текст на предложения и загружаем их в список
+#for substring in list(sentenize(cleaned_text)):
+#    sentences.append(substring.text)
 
 # Загрузим модель с сайта HuggingFace и создадим ее экземпляр
 model_checkpoint = 'cointegrated/rubert-tiny-sentiment-balanced'
 tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
 model = AutoModelForSequenceClassification.from_pretrained(model_checkpoint)
-if torch.cuda.is_available():
-    model.cuda()
-   
+#if torch.cuda.is_available():
+#    model.cuda()
+
+def convert_to_letter(val) -> str:
+    if val < -0.33: return 'B'
+    elif val < 0.33: return 'N'
+    return 'G' 
+
 # Сложная функция, которая заставит модель работать
-def estimate_sentiment(messages: list) -> list:
-    sentiment_out = []
+def estimate_sentiment(messages: list):
+    data = []
     for text in messages:
         with torch.no_grad():
             inputs = tokenizer(text, return_tensors='pt', truncation=True, padding=True).to(model.device)
             proba = torch.sigmoid(model(**inputs).logits).cpu().numpy()[0]
-            sentiment_out.append(proba.dot([-1, 0, 1]))
-    return sentiment_out
+            val = round(proba.dot([-1, 0, 1]), 4)
+            data.append({'comment':text, 'value': val, 'letter': convert_to_letter(val)})
+    with open('output1.csv', 'w+', encoding='utf-8-sig', newline='') as csvfile:
+        fieldnames = ['comment', 'value', 'letter']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(data)
 
 import time
 
 start = time.time()
-sentiments = estimate_sentiment(sentences)
+estimate_sentiment(sentences)
 end = time.time()
-print("Took", end - start, "ms")
-print(round(sentiments[0], 2)) #print result
+print("Took", end - start, "sec")

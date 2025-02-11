@@ -49,8 +49,10 @@ def read_file(filename) -> list:
             sentences.append(cleaned_text)
     return sentences
 
-sentences = read_file('dataset_comments35.csv')
-#for substring in list(sentenize(cleaned_text)):
+sentences = read_file('dataset_comments.csv')
+
+ 
+# for substring in list(sentenize(cleaned_text)):
 #    sentences.append(substring.text)
 # Разбиваем текст на предложения и загружаем их в список
 #for substring in list(sentenize(cleaned_text)):
@@ -64,12 +66,13 @@ model = AutoModelForSequenceClassification.from_pretrained(model_checkpoint)
 #    model.cuda()
 
 def convert_to_letter(val) -> str:
-    if val < -0.33: return 'B'
-    elif val < 0.33: return 'N'
+    if val < -0.33: return 'B' 
     return 'G' 
+import time
 
 # Сложная функция, которая заставит модель работать
 def estimate_sentiment(messages: list):
+    start = time.time()
     data = []
     for text in messages:
         with torch.no_grad():
@@ -77,15 +80,13 @@ def estimate_sentiment(messages: list):
             proba = torch.sigmoid(model(**inputs).logits).cpu().numpy()[0]
             val = round(proba.dot([-1, 0, 1]), 4)
             data.append({'comment':text, 'value': val, 'letter': convert_to_letter(val)})
-    with open('output1.csv', 'w+', encoding='utf-8-sig', newline='') as csvfile:
+    end = time.time()
+    print("Took", end - start, "sec")
+    with open('output.csv', 'w+', encoding='utf-8-sig', newline='') as csvfile:
         fieldnames = ['comment', 'value', 'letter']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(data)
 
-import time
 
-start = time.time()
 estimate_sentiment(sentences)
-end = time.time()
-print("Took", end - start, "sec")

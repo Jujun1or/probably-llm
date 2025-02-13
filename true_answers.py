@@ -27,11 +27,12 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 # Фильтр Савицкого-Голея понадобится нам для обработки результатов,
 # которая будет описана позже
 
-def clean_text(input_string):
-    # Регулярное выражение для русских букв, пробелов и знаков препинания
-    pattern = r'[^а-яА-ЯёЁ0-9.,!?;:—()“”\'"-]'
-    cleaned_string = re.sub(pattern, '', input_string)
-    return cleaned_string
+def clean_text(text):
+    text = re.sub(r'[^а-яА-ЯёЁ\s().,:-;?!_]', ' ', text)
+    text = re.sub(r'([().,:-;?!])', r' \1 ', text)
+    text = text.lower()
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
 
 def read_file(filename) -> list:
     sentences = []

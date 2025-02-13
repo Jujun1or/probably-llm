@@ -1,20 +1,32 @@
-import React, { useEffect, useState } from 'react';
+// src/App.js
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import SentimentAnalyzer from './components/SentimentAnalyzer';
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#1976d2',
+    },
+    secondary: {
+      main: '#dc004e',
+    },
+  },
+  typography: {
+    fontFamily: [
+      'Roboto',
+      'Arial',
+      'sans-serif'
+    ].join(','),
+  },
+});
 
 function App() {
-  const [message, setMessage] = useState('');
-
-  useEffect(() => {
-    fetch('/api/hello')
-      .then(response => response.json())
-      .then(data => setMessage(data.message));
-  }, []);
-
   return (
-    <div className="App">
-      <header className="App-header">
-        <p>{message}</p>
-      </header>
-    </div>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <SentimentAnalyzer />
+    </ThemeProvider>
   );
 }
 

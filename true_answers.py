@@ -29,7 +29,7 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 def clean_text(input_string):
     # Регулярное выражение для русских букв, пробелов и знаков препинания
-    pattern = r'[^а-яА-ЯёЁ0-9s.,!?;:—()“”\'"-]'
+    pattern = r'[^а-яА-ЯёЁ0-9.,!?;:—()“”\'"-]'
     cleaned_string = re.sub(pattern, '', input_string)
     return cleaned_string
 
@@ -40,7 +40,7 @@ def read_file(filename) -> list:
         header = list(next(reader)) 
         for items in reader:
             text = items[2]
-            cleaned_text = clean_text(text)
+            cleaned_text = clean_text(html2text.html2text(text))
             sentences.append(cleaned_text)
     return sentences
 

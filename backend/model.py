@@ -1,15 +1,15 @@
-import random
-import spacy
-import time
-import html2text
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torchtext
-from torchtext import data
-from torchtext import datasets
-import csv
-import re
+#import random
+#import spacy
+#import time
+#import html2text
+#import torch
+#import torch.nn as nn
+#import torch.optim as optim
+#import torchtext
+#from torchtext import data
+#from torchtext import datasets
+#import csv
+#import re
 
 #TODO
 
@@ -19,11 +19,11 @@ class Model():
     traits = dict() #traits gonna be heare as dictionary
 #TODO
 #Iface
-    def __init__():
+    def __init__(self):
         pass
     
     def get_anwser(sentance: str) -> str:
-        pass
+        return "neutral"
 
     def retrain(lines: list):
         pass

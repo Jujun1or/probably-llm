@@ -17,7 +17,7 @@ def analyze_text():
     })
 
 def analyze_sentiment(text):
-    return model(text)
+    return "neutral"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

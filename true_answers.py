@@ -26,17 +26,12 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 # Фильтр Савицкого-Голея понадобится нам для обработки результатов,
 # которая будет описана позже
-from scipy.signal import savgol_filter
 
-def clean_text(text: str) -> str:
-
-    # Заменяем переносы строк на пробелы
-    text = text.replace('\n', ' ')
-    # Убираем лишние пробелы
-    cleaned_text = re.sub(r'\s+', ' ', text).strip()
-
-    return cleaned_text
-
+def clean_text(input_string):
+    # Регулярное выражение для русских букв, пробелов и знаков препинания
+    pattern = r'[^а-яА-ЯёЁ0-9s.,!?;:—()“”\'"-]'
+    cleaned_string = re.sub(pattern, '', input_string)
+    return cleaned_string
 
 def read_file(filename) -> list:
     sentences = []
@@ -45,7 +40,7 @@ def read_file(filename) -> list:
         header = list(next(reader)) 
         for items in reader:
             text = items[2]
-            cleaned_text = clean_text(html2text.html2text(text))
+            cleaned_text = clean_text(text)
             sentences.append(cleaned_text)
     return sentences
 
@@ -67,6 +62,7 @@ model = AutoModelForSequenceClassification.from_pretrained(model_checkpoint)
 
 def convert_to_letter(val) -> str:
     if val < -0.33: return 'B' 
+    elif val < 0.33: return 'N'
     return 'G' 
 import time
 

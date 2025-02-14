@@ -21,5 +21,8 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Права доступа
 RUN chmod -R 755 /usr/share/nginx/html
 
+RUN mkdir -p /var/cache/nginx/client_temp && \
+    chmod -R 755 /var/cache/nginx
+
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

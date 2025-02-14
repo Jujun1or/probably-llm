@@ -1,5 +1,6 @@
 // src/components/SentimentAnalyzer.jsx
 import React, { useState } from 'react';
+import CSVUploader from './CSVUploader';
 import { 
   Container,
   TextField,
@@ -9,7 +10,9 @@ import {
   Card,
   CardContent,
   Alert,
-  Box
+  Box,
+  Stack,
+  Divider
 } from '@mui/material';
 import { styled } from '@mui/system';
 
@@ -61,7 +64,7 @@ const SentimentAnalyzer = () => {
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h4" gutterBottom align="center">
         Sentiment Analysis Tool
       </Typography>
 
@@ -74,22 +77,33 @@ const SentimentAnalyzer = () => {
         value={text}
         onChange={(e) => setText(e.target.value.slice(0, MAX_LENGTH))}
         helperText={`${text.length}/${MAX_LENGTH} characters`}
-        sx={{ my: 2 }}
+        sx={{ my: 3 }}
       />
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+      <Stack 
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={3}
+        justifyContent="center"
+        alignItems="center"
+        sx={{ mb: 4 }}
+      >
         <Button
           variant="contained"
           color="primary"
           onClick={handleAnalyze}
           disabled={loading || !text.trim()}
-          startIcon={loading && <CircularProgress size={20} />}
+          sx={{ width: { xs: '100%', sm: 'auto' }, py: 1.5 }}
         >
-          {loading ? 'Analyzing...' : 'Analyze Text'}
+          {loading ? <CircularProgress size={24} /> : 'Analyze Text'}
         </Button>
-      </Box>
+
+        <Divider orientation="vertical" flexItem sx={{ mx: 2, display: { xs: 'none', sm: 'block' } }} />
+
+        <CSVUploader />
+      </Stack>
+
 
       {result && (
         <StyledCard sentiment={result}>

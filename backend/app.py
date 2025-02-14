@@ -1,5 +1,7 @@
 # app.py
-from flask import Flask, request, jsonify
+from flask import Flask, request, send_file, jsonify
+import pandas as pd
+from io import BytesIO
 from model import Model
 
 app = Flask(__name__)
@@ -19,5 +21,39 @@ def analyze_text():
 def analyze_sentiment(text):
     return "neutral"
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+@app.route('/api/analyze-csv', methods=['POST'])
+def analyze_csv():
+    try:
+        app.logger.info("Headers: %s", request.headers)
+        app.logger.info("Files: %s", request.files)
+        
+        if 'file' not in request.files:
+            app.logger.error("No file part in request")
+            return jsonify({'error': 'No file part'}), 400
+            
+        file = request.files['file']
+        app.logger.info("Received file: %s, Size: %d", file.filename, len(file.read()))
+        file.seek(0) 
+        if not file.filename.endswith('.csv'):
+            app.logger.error("Not a csv")
+            return {'error': 'Invalid file format'}, 400
+    
+        # Чтение CSV
+        df = pd.read_csv(file)
+    except Exception as e:
+        app.logger.error(f"Error processing file: {str(e)}")
+        return {'error': f'Error reading CSV: {str(e)}'}, 400
+
+    df['sentiment'] = df['MessageText'].apply(analyze_sentiment)
+    
+    # Генерация CSV
+    output = BytesIO()
+    df.to_csv(output, index=False)
+    output.seek(0)
+    
+    return send_file(
+        output,
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name='results.csv'
+    )

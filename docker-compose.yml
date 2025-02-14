@@ -9,6 +9,12 @@ services:
       - "5000:5000"
     networks:
       - app-network
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+    volumes:
+      - ./backend:/app
+      - ./logs:/app/logs
 
   frontend:
     build:

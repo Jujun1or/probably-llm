@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: hypercorn app:app --bind 0.0.0.0:5000 --worker-class asyncio
+    ports:
+      - "5000:5000"
+    networks:
+      - app-network
+    environment:
+      - QUART_ENV=production
+      - HYPERCORN_WORKERS=6
+      - PYTHONPATH=/app
+      - MAX_CONTENT_LENGTH=104857600
+    volumes:
+      - ./backend:/app
+      - ./logs:/app/logs
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    volumes:
+      - ./large_files_temp:/var/cache/nginx/client_temp
+    environment:
+      - NGINX_MAX_BODY_SIZE=100M
+
+networks:
+  app-network:
+    driver: bridge

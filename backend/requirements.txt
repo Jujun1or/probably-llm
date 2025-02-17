@@ -1,0 +1,11 @@
+quart 
+hypercorn
+pandas>=2.0.0
+tensorflow==2.18.0
+keras==3.8.0
+tf_keras==2.18.0
+httpx
+aiofiles
+python-dotenv
+uvicorn
+html2text

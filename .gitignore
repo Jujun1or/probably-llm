@@ -1,0 +1,12 @@
+dataset_comments35.csv
+dataset_comments.csv
+output.csv
+output1.csv
+backend/saved_model/
+backend/__pycache__/model.cpython-39.pyc
+backend/model.tf/variables/variables.data-00000-of-00001
+backend/__pycache__/app.cpython-39.pyc
+backend/model.tf/fingerprint.pb
+.gitignore
+backend/model.tf/variables/variables.index
+backend/model.tf/saved_model.pb

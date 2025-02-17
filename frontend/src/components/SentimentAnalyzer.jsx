@@ -18,13 +18,16 @@ import { styled } from '@mui/system';
 const StyledCard = styled(Card)(({ theme, sentiment }) => ({
   marginTop: theme.spacing(2),
   borderLeft: `4px solid ${
-    sentiment === 'positive' ? '#4caf50' :
-    sentiment === 'negative' ? '#f44336' : '#ff9800'
+    sentiment === 'Positive' ? '#4caf50' :
+    sentiment === 'Negative' ? '#f44336' : '#ff9800'
   }`,
   transition: 'all 0.3s ease',
   backgroundColor: '#1e1e1e',
-  width: '250px', // Ширина блока
-  height: '80px', // Высота блока
+  width: '400px', // Ширина блока
+  height: '120px', // Высота блока
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 }));
 
 const SentimentAnalyzer = () => {
@@ -112,7 +115,7 @@ const SentimentAnalyzer = () => {
             </Box>
 
             {result && (
-              <Box sx={{ width: '250px' }}> {/* Фиксированная ширина для результата */}
+              <Box sx={{ width: '400px' }}> {/* Фиксированная ширина для результата */}
                 <StyledCard sentiment={result}>
                   <CardContent>
                     <Typography variant="h6" gutterBottom sx={{ color: '#fff', textAlign: 'center' }}>
@@ -121,8 +124,8 @@ const SentimentAnalyzer = () => {
                     <Typography 
                       variant="h4"
                       color={
-                        result === 'positive' ? 'success.main' :
-                        result === 'negative' ? 'error.main' : 'warning.main'
+                        result === 'Positive' ? 'success.main' :
+                        result === 'Negative' ? 'error.main' : 'warning.main'
                       }
                       sx={{ textAlign: 'center' }}
                     >

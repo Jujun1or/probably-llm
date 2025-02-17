@@ -15,21 +15,19 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
-// Стили для анимации заполнения баров
 const ProgressBarWithAnimation = styled(LinearProgress)(({ theme }) => ({
   height: 8,
   borderRadius: 5,
   backgroundColor: '#333',
   '& .MuiLinearProgress-bar': {
     borderRadius: 5,
-    transition: 'transform 1s ease-out', // Анимация заполнения
+    transition: 'transform 1s ease-out',
   },
 }));
 
 const CSVUploader = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState(null);
-  const [progress, setProgress] = useState(0);
   const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState({ positive: 0, neutral: 0, negative: 0, total: 0 });
   const [animatedValues, setAnimatedValues] = useState({ positive: 0, neutral: 0, negative: 0 });
@@ -53,7 +51,6 @@ const CSVUploader = () => {
 
     try {
       setIsProcessing(true);
-      setProgress(0);
 
       const response = await fetch('/api/analyze-csv', {
         method: 'POST',
@@ -65,7 +62,6 @@ const CSVUploader = () => {
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       setDownloadUrl(url);
-      setProgress(100);
 
       // Чтение CSV-файла для подсчета результатов
       const reader = new FileReader();
@@ -75,13 +71,13 @@ const CSVUploader = () => {
         let positive = 0, neutral = 0, negative = 0;
 
         rows.forEach(row => {
-          const sentiment = row.split(',')[1]; // Предположим, что sentiment находится во второй колонке
+          const sentiment = row.split(',')[4].trim().toLowerCase(); // Приводим к нижнему регистру
           if (sentiment === 'positive') positive++;
           else if (sentiment === 'neutral') neutral++;
           else if (sentiment === 'negative') negative++;
         });
 
-        setResults({ positive, neutral, negative, total: rows.length });
+        setResults({ positive, neutral, negative, total: rows.length - 1 });
       };
       reader.readAsText(file);
       
@@ -92,14 +88,12 @@ const CSVUploader = () => {
     }
   };
 
-  // Анимация заполнения баров
   useEffect(() => {
     if (showResults) {
       const positiveValue = (results.positive / results.total) * 100;
       const neutralValue = (results.neutral / results.total) * 100;
       const negativeValue = (results.negative / results.total) * 100;
 
-      // Запускаем анимацию для каждого бара с задержкой
       setTimeout(() => {
         setAnimatedValues({ positive: positiveValue, neutral: 0, negative: 0 });
       }, 100);
@@ -147,17 +141,30 @@ const CSVUploader = () => {
             />
           </Button>
 
-          {isProcessing && (
-            <Box sx={{ width: '30%' }}>
-              <LinearProgress variant="determinate" value={progress} sx={{ height: 8, borderRadius: 5 }} />
-            </Box>
+          {downloadUrl && (
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<Download />}
+              sx={{ backgroundColor: '#4caf50', '&:hover': { backgroundColor: '#388e3c' } }}
+              onClick={() => {
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = 'processed_results.csv';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+              }}
+            >
+              Download File
+            </Button>
           )}
         </Box>
 
         {downloadUrl && (
           <>
             <Divider orientation="vertical" flexItem sx={{ mx: 2, borderColor: '#555' }} />
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ width: '40%', display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Button
                 variant="contained"
                 color="primary"
@@ -201,28 +208,9 @@ const CSVUploader = () => {
           </>
         )}
       </Box>
-
-      {downloadUrl && (
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<Download />}
-          sx={{ mt: 2, backgroundColor: '#4caf50', '&:hover': { backgroundColor: '#388e3c' } }}
-          onClick={() => {
-            const a = document.createElement('a');
-            a.href = downloadUrl;
-            a.download = 'processed_results.csv';
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-          }}
-        >
-          Download Results
-        </Button>
-      )}
       
       <Typography variant="body2" sx={{ mt: 1, color: '#aaa' }}>
-        CSV format: text_column (max 1000 rows, 5MB)
+        CSV format: text_column (max 100MB)
       </Typography>
     </Box>
   );

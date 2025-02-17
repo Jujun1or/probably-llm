@@ -1,4 +1,3 @@
-// src/components/SentimentAnalyzer.jsx
 import React, { useState } from 'react';
 import CSVUploader from './CSVUploader';
 import { 
@@ -11,18 +10,21 @@ import {
   CardContent,
   Alert,
   Box,
-  Stack,
-  Divider
+  Grid,
+  Stack
 } from '@mui/material';
 import { styled } from '@mui/system';
 
 const StyledCard = styled(Card)(({ theme, sentiment }) => ({
-  marginTop: theme.spacing(3),
+  marginTop: theme.spacing(2),
   borderLeft: `4px solid ${
     sentiment === 'positive' ? '#4caf50' :
     sentiment === 'negative' ? '#f44336' : '#ff9800'
   }`,
-  transition: 'all 0.3s ease'
+  transition: 'all 0.3s ease',
+  backgroundColor: '#1e1e1e',
+  width: '250px', // Ширина блока
+  height: '80px', // Высота блока
 }));
 
 const SentimentAnalyzer = () => {
@@ -64,65 +66,79 @@ const SentimentAnalyzer = () => {
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom align="center">
+      <Typography variant="h4" gutterBottom align="center" sx={{ color: '#fff' }}>
         Sentiment Analysis Tool
       </Typography>
 
-      <TextField
-        fullWidth
-        multiline
-        rows={6}
-        variant="outlined"
-        label="Enter your text"
-        value={text}
-        onChange={(e) => setText(e.target.value.slice(0, MAX_LENGTH))}
-        helperText={`${text.length}/${MAX_LENGTH} characters`}
-        sx={{ my: 3 }}
-      />
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            multiline
+            rows={6}
+            variant="outlined"
+            label="Enter your text"
+            value={text}
+            onChange={(e) => setText(e.target.value.slice(0, MAX_LENGTH))}
+            helperText={`${text.length}/${MAX_LENGTH} characters`}
+            sx={{ my: 2, backgroundColor: '#1e1e1e', color: '#fff' }}
+            InputProps={{
+              style: { color: '#fff' },
+            }}
+            InputLabelProps={{
+              style: { color: '#aaa' },
+            }}
+          />
+        </Grid>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        <Grid item xs={12}>
+          <Stack direction="row" spacing={3} alignItems="flex-start">
+            <Box sx={{ flex: 1 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleAnalyze}
+                disabled={loading || !text.trim()}
+                sx={{ 
+                  width: '200px', 
+                  py: 1.5, 
+                  backgroundColor: '#4caf50',
+                  '&:hover': { backgroundColor: '#388e3c' },
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                {loading ? <CircularProgress size={24} /> : 'Analyze Text'}
+              </Button>
+            </Box>
 
-      <Stack 
-        direction={{ xs: 'column', sm: 'row' }}
-        spacing={3}
-        justifyContent="center"
-        alignItems="center"
-        sx={{ mb: 4 }}
-      >
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleAnalyze}
-          disabled={loading || !text.trim()}
-          sx={{ width: { xs: '100%', sm: 'auto' }, py: 1.5 }}
-        >
-          {loading ? <CircularProgress size={24} /> : 'Analyze Text'}
-        </Button>
+            {result && (
+              <Box sx={{ width: '250px' }}> {/* Фиксированная ширина для результата */}
+                <StyledCard sentiment={result}>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom sx={{ color: '#fff', textAlign: 'center' }}>
+                      Analysis Result:
+                    </Typography>
+                    <Typography 
+                      variant="h4"
+                      color={
+                        result === 'positive' ? 'success.main' :
+                        result === 'negative' ? 'error.main' : 'warning.main'
+                      }
+                      sx={{ textAlign: 'center' }}
+                    >
+                      {result.charAt(0).toUpperCase() + result.slice(1)}
+                    </Typography>
+                  </CardContent>
+                </StyledCard>
+              </Box>
+            )}
+          </Stack>
+        </Grid>
 
-        <Divider orientation="vertical" flexItem sx={{ mx: 2, display: { xs: 'none', sm: 'block' } }} />
-
-        <CSVUploader />
-      </Stack>
-
-
-      {result && (
-        <StyledCard sentiment={result}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Analysis Result:
-            </Typography>
-            <Typography 
-              variant="h4"
-              color={
-                result === 'positive' ? 'success.main' :
-                result === 'negative' ? 'error.main' : 'warning.main'
-              }
-            >
-              {result.charAt(0).toUpperCase() + result.slice(1)}
-            </Typography>
-          </CardContent>
-        </StyledCard>
-      )}
+        <Grid item xs={12}>
+          <CSVUploader />
+        </Grid>
+      </Grid>
     </Container>
   );
 };

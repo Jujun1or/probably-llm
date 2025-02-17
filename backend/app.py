@@ -74,29 +74,47 @@ async def analyze_text():
 async def analyze_csv():
     try:
         files = await request.files
+        if 'file' not in files:
+            return jsonify({'error': 'No file part'}), 400
+
         file = files['file']
-        file_contents = await file.read()
         
-        # Синхронная обработка CSV в executor
+        # Читаем файл как синхронную операцию в executor
         loop = asyncio.get_event_loop()
-        df = await loop.run_in_executor(None, pd.read_csv, BytesIO(file_contents))
+        file_contents = await loop.run_in_executor(None, file.read)
         
-        # Пакетная обработка на CPU
+        # Обработка CSV
+        df = await loop.run_in_executor(
+            None,
+            lambda: pd.read_csv(BytesIO(file_contents))
+        )
+        
+        # Пакетная обработка
         texts = df['MessageText'].tolist()
         results = []
         batch_size = 32
         
         for i in range(0, len(texts), batch_size):
             batch = texts[i:i+batch_size]
-            batch_results = await asyncio.gather(
-                *[async_predict_sentiment(text) for text in batch]
-            )
+            batch_cleaned = [clean_text(h.handle(text)) for text in batch]
+            
+            # Получаем имя входного тензора
+            input_name = session.get_inputs()[0].name
+            
+            # Пакетный прогноз
+            inputs = { input_name: np.array([text_to_sequence(batch_cleaned)], dtype = np.int32)}
+            outputs = session.run(None, inputs)
+            batch_results = [['Negative', 'Neutral', 'Positive'][np.argmax(p)]for p in outputs[0]]
             results.extend(batch_results)
         
         df['sentiment'] = results
         
+        # Синхронная запись CSV
         output = BytesIO()
-        await loop.run_in_executor(None, lambda: df.to_csv(output, index=False))
+        await loop.run_in_executor(
+            None,
+            lambda: df.to_csv(output, index=False, encoding='utf-8')
+        )
         output.seek(0)
         
         return await send_file(
@@ -107,7 +125,7 @@ async def analyze_csv():
         )
         
     except Exception as e:
+        app.logger.error(f"CSV Error: {str(e)}")
         return jsonify({'error': str(e)}), 500
-
 if __name__ == '__main__':
     app.run()

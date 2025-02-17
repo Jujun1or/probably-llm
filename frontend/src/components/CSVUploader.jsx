@@ -63,7 +63,7 @@ const CSVUploader = () => {
       const url = window.URL.createObjectURL(blob);
       setDownloadUrl(url);
 
-      // Чтение CSV-файла для подсчета результатов
+      // Чтение processed_results.csv для подсчета результатов
       const reader = new FileReader();
       reader.onload = (e) => {
         const text = e.target.result;
@@ -84,7 +84,7 @@ const CSVUploader = () => {
 
         setResults({ positive, neutral, negative, total: rows.length - 1 }); // Учитываем только строки с данными
       };
-      reader.readAsText(file);
+      reader.readAsText(blob); // Читаем blob (processed_results.csv)
       
     } catch (error) {
       alert(error.message);

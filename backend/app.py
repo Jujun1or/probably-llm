@@ -1,43 +1,59 @@
+# app.py
 from quart import Quart, request, send_file, jsonify
-import httpx
 import pandas as pd
 from io import BytesIO
-import tensorflow as tf
-import re
 import numpy as np
 import asyncio
 import html2text
+import onnxruntime as ort
+import re
+import tensorflow as tf
+import pickle
+
+
+tf.config.set_visible_devices([], 'GPU') 
+
+session = ort.InferenceSession(
+    'model.onnx',
+    providers=['CPUExecutionProvider'],  
+)
 
 h = html2text.HTML2Text()
 
+with open('vocab.pkl', 'rb') as f:
+        word_to_index = pickle.load(f)
+
+def text_to_sequence(text, max_len=256):
+    sequence = [word_to_index.get(word, 0) for word in text.split()] 
+    # Pad/truncate to max_len
+    if len(sequence) >= max_len:
+        return sequence[:max_len]
+    return sequence + [0] * (max_len - len(sequence))
+
+
 def clean_text(text):
-    # EXACT replication of training preprocessing
     text = re.sub(r'[^а-яА-ЯёЁ\s().,:-;?!]', ' ', text)
-    text = re.sub(r'([().,:-;?!])', r' \1 ', text)  # Fixed regex (removed accidental 'p')
+    text = re.sub(r'([().,:-;?!])', r' \1 ', text)
     text = text.lower()
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
-tf.config.set_visible_devices([], 'GPU')
-
-
-loaded = tf.saved_model.load('model.tf')
-infer = loaded.signatures['serving_default']
-
 def predict_sentiment(text):
-    cleaned = clean_text(text)
-    input_tensor = tf.constant(([cleaned], ' '), dtype=tf.string)
-    output = infer(input_tensor)
-    logits = list(output.values())[0].numpy()[0]
-    return ['Negative', 'Neutral', 'Positive'][logits.argmax()]
+    cleaned = clean_text(h.handle(text))
+    input_name = session.get_inputs()[0].name
+    inputs = {
+        input_name: np.array([text_to_sequence(cleaned)], dtype = np.int32)
+    }
+    outputs = session.run(None, inputs)
+    logits = outputs[0][0]
+    return ['Negative', 'Neutral', 'Positive'][np.argmax(logits)]
 
-async def async_predict_sentiment(texts):
+
+async def async_predict_sentiment(text):
     loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(None, predict_sentiment, texts)
+    return await loop.run_in_executor(None, predict_sentiment, text)
 
 app = Quart(__name__)
-
-app.config['MAX_CONTENT_LENGTH'] = 200 *1000 * 1024
 
 @app.route('/api/analyze', methods=['POST'])
 async def analyze_text():
@@ -45,10 +61,9 @@ async def analyze_text():
         data = await request.get_json()
         text = data['text'].strip()
         
-        sentiments = await async_predict_sentiment(text) 
-        app.logger.info(text)
+        sentiment = await async_predict_sentiment(text)
         return jsonify({
-            'sentiment': str(sentiments),
+            'sentiment': sentiment,
             'text_length': len(text)
         })
     except Exception as e:
@@ -58,37 +73,30 @@ async def analyze_text():
 @app.route('/api/analyze-csv', methods=['POST'])
 async def analyze_csv():
     try:
-        # Асинхронное чтение файла
         files = await request.files
-        if 'file' not in files:
-            return jsonify({'error': 'No file part'}), 400
-            
         file = files['file']
-        file_contents = file.read()
+        file_contents = await file.read()
         
-        if not file.filename.endswith('.csv'):
-            return jsonify({'error': 'Invalid file format'}), 400
-
-        # Синхронное чтение CSV в отдельном потоке
+        # Синхронная обработка CSV в executor
         loop = asyncio.get_event_loop()
-        df = await loop.run_in_executor(
-            None, 
-            pd.read_csv, 
-            BytesIO(file_contents)
-        )
+        df = await loop.run_in_executor(None, pd.read_csv, BytesIO(file_contents))
         
-        # Асинхронное предсказание для всех текстов
+        # Пакетная обработка на CPU
         texts = df['MessageText'].tolist()
-
-        sentiments =[await async_predict_sentiment(h.handle(text)) for text in texts]
-        df['sentiment'] = sentiments
-
-        # Синхронная запись CSV в отдельном потоке
+        results = []
+        batch_size = 32
+        
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i:i+batch_size]
+            batch_results = await asyncio.gather(
+                *[async_predict_sentiment(text) for text in batch]
+            )
+            results.extend(batch_results)
+        
+        df['sentiment'] = results
+        
         output = BytesIO()
-        await loop.run_in_executor(
-            None,
-            lambda: df.to_csv(output, index=False)
-        )
+        await loop.run_in_executor(None, lambda: df.to_csv(output, index=False))
         output.seek(0)
         
         return await send_file(
@@ -99,5 +107,7 @@ async def analyze_csv():
         )
         
     except Exception as e:
-        app.logger.error(f"Error: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run()

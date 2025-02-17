@@ -9,3 +9,4 @@ aiofiles
 python-dotenv
 uvicorn
 html2text
+onnxruntime

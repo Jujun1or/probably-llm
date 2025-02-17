@@ -13,3 +13,5 @@ backend/model1.tf/fingerprint.pb
 backend/model1.tf/saved_model.pb
 backend/model1.tf/variables/variables.data-00000-of-00001
 backend/model1.tf/variables/variables.index
+backend/model.onnx
+backend/vocab.pkl

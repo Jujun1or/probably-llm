@@ -71,13 +71,18 @@ const CSVUploader = () => {
         let positive = 0, neutral = 0, negative = 0;
 
         rows.forEach(row => {
-          const sentiment = row.split(',')[4].trim().toLowerCase(); // Приводим к нижнему регистру
+          if (row.trim() === '') return; // Пропускаем пустые строки
+
+          const columns = row.split(',');
+          if (columns.length < 5) return; // Пропускаем строки с некорректным форматом
+
+          const sentiment = columns[4].trim().toLowerCase(); // Приводим к нижнему регистру
           if (sentiment === 'positive') positive++;
           else if (sentiment === 'neutral') neutral++;
           else if (sentiment === 'negative') negative++;
         });
 
-        setResults({ positive, neutral, negative, total: rows.length - 1 });
+        setResults({ positive, neutral, negative, total: rows.length - 1 }); // Учитываем только строки с данными
       };
       reader.readAsText(file);
       

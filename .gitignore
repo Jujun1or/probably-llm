@@ -15,3 +15,7 @@ backend/model1.tf/variables/variables.data-00000-of-00001
 backend/model1.tf/variables/variables.index
 backend/model.onnx
 backend/vocab.pkl
+backend/best_cpu.tf/fingerprint.pb
+backend/best_cpu.tf/saved_model.pb
+backend/best_cpu.tf/variables/variables.index
+backend/best_cpu.tf/variables/variables.data-00000-of-00001

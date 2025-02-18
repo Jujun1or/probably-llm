@@ -82,7 +82,7 @@ const CSVUploader = () => {
             return; // Пропускаем строки с некорректным форматом
           }
 
-          const sentiment = columns[4].trim().toLowerCase(); // Приводим к нижнему регистру
+          const sentiment = columns[columns.length - 1].trim().toLowerCase(); // Приводим к нижнему регистру
           console.log(`Row ${index}:`, row);
           console.log(`Sentiment:`, sentiment);
 

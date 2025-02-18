@@ -19,3 +19,9 @@ backend/best_cpu.tf/fingerprint.pb
 backend/best_cpu.tf/saved_model.pb
 backend/best_cpu.tf/variables/variables.index
 backend/best_cpu.tf/variables/variables.data-00000-of-00001
+model.onnx
+best_cpu.tf/fingerprint.pb
+.gitignore
+best_cpu.tf/variables/variables.data-00000-of-00001
+best_cpu.tf/variables/variables.index
+best_cpu.tf/saved_model.pb

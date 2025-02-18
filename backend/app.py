@@ -29,42 +29,33 @@ tf.config.set_visible_devices([], 'GPU')
 executor = concurrent.futures.ThreadPoolExecutor(max_workers=6)
 
 
-def safe_html2text(html: str) -> str:
-    text = re.sub(r'<[^>]+>', '', html)
-    replacements = [
-        ('&nbsp;', ' '),
-        ('&amp;', '&'),
-        ('&lt;', '<'),
-        ('&gt;', '>'),
-        ('&quot;', '"'),
-        ('&#39;', "'"),
-    ]
-    for pattern, replacement in replacements:
-        text = text.replace(pattern, replacement)
-    text = re.sub(r'\s+', ' ', text).strip()
-    return text
-
-
 with open('vocab.pkl', 'rb') as f:
         word_to_index = pickle.load(f)
 
-def text_to_sequence(text, max_len=256):
+def text_to_sequence(text, max_len=300):
     sequence = [word_to_index.get(word, 0) for word in text.split()] 
     if len(sequence) >= max_len:
         return sequence[:max_len]
     return sequence + [0] * (max_len - len(sequence))
 
-
 def clean_text(text):
-    text = re.sub(r'[^а-яА-ЯёЁ\s().,:-;?!]', ' ', text)
-    text = re.sub(r'([().,:-;?!])', r' \1 ', text)
-    text = text.lower()
-    text = re.sub(r'\s+', ' ', text).strip()
-    return text
+    try:
+        # Original cleaning steps
+        text = re.sub(r'[^а-яА-ЯёЁ?!()\s]', ' ', text)
+        text = text.encode('utf-8', errors='ignore').decode('utf-8')
+        text = text.replace('ё', 'е').replace('Ё', 'Е')
+        text = re.sub(r'\d+', ' ', text)
+        text = re.sub(r'([?!()])', r' \1 ', text)  # Add spaces around punctuation
+        text = re.sub(r'\s+', ' ', text)
+        return text.lower().strip()
+
+
+    except UnicodeEncodeError:
+        return ""
 
 def predict_sentiment(text):
     session = get_session()
-    cleaned = clean_text(safe_html2text(text))
+    cleaned = clean_text(text)
     input_name = session.get_inputs()[0].name
     inputs = {
         input_name: np.array([text_to_sequence(cleaned)], dtype = np.int32)

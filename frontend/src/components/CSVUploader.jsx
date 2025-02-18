@@ -70,13 +70,22 @@ const CSVUploader = () => {
         const rows = text.split('\n').slice(1); // Пропускаем заголовок
         let positive = 0, neutral = 0, negative = 0;
 
-        rows.forEach(row => {
-          if (row.trim() === '') return; // Пропускаем пустые строки
+        rows.forEach((row, index) => {
+          if (row.trim() === '') {
+            console.log(`Skipping empty row at index ${index}`);
+            return; // Пропускаем пустые строки
+          }
 
           const columns = row.split(',');
-          if (columns.length < 5) return; // Пропускаем строки с некорректным форматом
+          if (columns.length < 5) {
+            console.log(`Skipping malformed row at index ${index}:`, row);
+            return; // Пропускаем строки с некорректным форматом
+          }
 
           const sentiment = columns[4].trim().toLowerCase(); // Приводим к нижнему регистру
+          console.log(`Row ${index}:`, row);
+          console.log(`Sentiment:`, sentiment);
+
           if (sentiment === 'positive') positive++;
           else if (sentiment === 'neutral') neutral++;
           else if (sentiment === 'negative') negative++;

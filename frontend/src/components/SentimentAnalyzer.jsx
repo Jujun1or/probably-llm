@@ -23,7 +23,7 @@ const StyledCard = styled(Card)(({ theme, sentiment }) => ({
   }`,
   transition: 'all 0.3s ease',
   backgroundColor: '#1e1e1e',
-  width: '400px', // Ширина блока
+  width: '100%', // Ширина блока будет адаптироваться
   height: '120px', // Высота блока
   display: 'flex',
   alignItems: 'center',
@@ -95,15 +95,15 @@ const SentimentAnalyzer = () => {
         </Grid>
 
         <Grid item xs={12}>
-          <Stack direction="row" spacing={3} alignItems="flex-start">
-            <Box sx={{ flex: 1 }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} alignItems="flex-start">
+            <Box sx={{ flex: 1, width: '100%' }}>
               <Button
                 variant="contained"
                 color="primary"
                 onClick={handleAnalyze}
                 disabled={loading || !text.trim()}
                 sx={{ 
-                  width: '200px', 
+                  width: { xs: '100%', sm: '200px' }, // Адаптивная ширина
                   py: 1.5, 
                   backgroundColor: '#4caf50',
                   '&:hover': { backgroundColor: '#388e3c' },
@@ -115,7 +115,7 @@ const SentimentAnalyzer = () => {
             </Box>
 
             {result && (
-              <Box sx={{ width: '400px' }}> {/* Фиксированная ширина для результата */}
+              <Box sx={{ width: { xs: '100%', sm: '400px' } }}> {/* Адаптивная ширина */}
                 <StyledCard sentiment={result}>
                   <CardContent>
                     <Typography variant="h6" gutterBottom sx={{ color: '#fff', textAlign: 'center' }}>
